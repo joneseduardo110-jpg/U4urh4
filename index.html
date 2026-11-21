@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#101b20"><link rel="manifest" href="manifest.webmanifest">
+<title>FREE FIRE ZERO 3D</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b20;color:white;font-family:Arial;touch-action:none}
+canvas{display:block}.hud{position:fixed;inset:0;pointer-events:none}.top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;font-weight:bold;text-shadow:0 2px 4px #000}.pill{background:#07130dcc;border:1px solid #ffffff55;border-radius:12px;padding:8px 11px;font-size:13px}
+.pad{position:absolute;bottom:18px;left:18px;width:132px;height:132px;border-radius:50%;background:#ffffff20;border:2px solid #ffffff77;pointer-events:auto}.stick{position:absolute;width:54px;height:54px;border-radius:50%;background:#ffffffaa;left:37px;top:37px}
+.actions{position:absolute;right:18px;bottom:20px;display:flex;gap:10px;align-items:end;pointer-events:auto}.btn{width:76px;height:76px;border-radius:50%;border:2px solid #fff;background:#c33d30dd;color:white;font-weight:bold}.btn.alt{width:60px;height:60px;background:#174bbaee}.hint{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;text-shadow:0 2px 4px #000;white-space:nowrap}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#071018bb;z-index:5}#panel{background:#101d25;border:1px solid #78909c;border-radius:18px;padding:24px;text-align:center;width:min(88vw,360px)}#panel h1{margin:0 0 8px;font-size:26px}#panel p{color:#d0dce0;line-height:1.4}#start{border:0;border-radius:12px;background:#e64b35;color:white;padding:14px 24px;font-size:17px;font-weight:bold}
+@media(orientation:portrait){.hint{bottom:158px}}
+</style></head><body>
+<div id="overlay"><div id="panel"><h1>FREE FIRE ZERO 3D</h1><p>Protótipo independente de batalha 3D.<br>Use o direcional para andar e ATIRAR para eliminar os bots.</p><button id="start">ENTRAR NA PARTIDA</button></div></div>
+<div class="hud"><div class="top"><div class="pill">FREE FIRE ZERO 3D</div><div class="pill" id="stats">❤️ 100 · ELIMS 0</div></div><div class="hint">DIRECIONAL: MOVER · ATIRAR: DISPARAR</div><div class="pad" id="pad"><div class="stick" id="stick"></div></div><div class="actions"><button class="btn alt" id="heal">CURA</button><button class="btn" id="fire">ATIRAR</button></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x87b7c5);scene.fog=new THREE.Fog(0x87b7c5,35,145);
+const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,300);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xccecff,0x52613d,2));const sun=new THREE.DirectionalLight(0xfff0d0,2.1);sun.position.set(-30,55,25);sun.castShadow=true;scene.add(sun);
+const mat=(color,roughness=.9)=>new THREE.MeshStandardMaterial({color,roughness});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(240,240),mat(0x537b45));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(240,48,0x81966a,0x71885c);grid.position.y=.015;scene.add(grid);
+function box(x,y,z,sx,sy,sz,color){let m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),mat(color));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m}
+function tree(x,z){let trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.32,2,7),mat(0x60432b));trunk.position.set(x,1,z);trunk.castShadow=true;scene.add(trunk);let crown=new THREE.Mesh(new THREE.ConeGeometry(1.45,3.4,7),mat(0x285b35));crown.position.set(x,3.35,z);crown.castShadow=true;scene.add(crown)}
+for(let i=0;i<90;i++){let x=(Math.random()-.5)*190,z=(Math.random()-.5)*190;if(Math.hypot(x,z)>12)tree(x,z)}
+for(let i=0;i<12;i++){let x=(Math.random()-.5)*100,z=(Math.random()-.5)*100;if(Math.hypot(x,z)<18)x+=24;box(x,1.5,z,7,3,6,0x9a927e);box(x,3.25,z,7.4,.5,6.4,0x51483d);box(x-1.8,1.2,z+3.02,1.4,1.5,.12,0x3e6572)}
+function soldier(color){let g=new THREE.Group();let body=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.8,4,8),mat(color));body.position.y=1.25;body.castShadow=true;g.add(body);let head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),mat(0xc69b78));head.position.y=2.05;g.add(head);let gun=new THREE.Mesh(new THREE.BoxGeometry(.16,.16,1.15),mat(0x20252a));gun.position.set(.38,1.45,-.5);g.add(gun);scene.add(g);return g}
+const player=soldier(0x244f9b);player.position.set(0,0,0);
+const bots=[];for(let i=0;i<8;i++){let b=soldier(0x9b3329);b.position.set((Math.random()-.5)*75,0,(Math.random()-.5)*75);if(b.position.length()<16)b.position.x+=24;b.userData={hp:3,cd:Math.random()*2,alive:true};bots.push(b)}
+let hp=100,kills=0,joy={x:0,y:0},moving=false,fire=false,game=false;const clock=new THREE.Clock();
+const stats=document.getElementById('stats');
+function updateStats(){stats.textContent=`❤️ ${hp} · ELIMS ${kills}`}
+function shoot(){if(!game)return;let alive=bots.filter(b=>b.userData.alive);if(!alive.length)return;let target=alive.sort((a,b)=>player.position.distanceTo(a.position)-player.position.distanceTo(b.position))[0];if(player.position.distanceTo(target.position)>48)return;target.userData.hp--;let d=target.position.clone().sub(player.position);player.rotation.y=Math.atan2(d.x,d.z);if(target.userData.hp<=0){target.userData.alive=false;scene.remove(target);kills++;updateStats()}}
+let fireClock=0;
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);if(game){
+ const speed=8;player.position.x+=joy.x*speed*dt;player.position.z+=joy.y*speed*dt;
+ if(Math.hypot(joy.x,joy.y)>.1)player.rotation.y=Math.atan2(joy.x,joy.y);
+ player.position.x=THREE.MathUtils.clamp(player.position.x,-105,105);player.position.z=THREE.MathUtils.clamp(player.position.z,-105,105);
+ for(const b of bots){if(!b.userData.alive)continue;let dx=player.position.x-b.position.x,dz=player.position.z-b.position.z,dist=Math.hypot(dx,dz);if(dist>5){b.position.x+=dx/dist*dt*1.5;b.position.z+=dz/dist*dt*1.5;b.rotation.y=Math.atan2(dx,dz)}b.userData.cd-=dt;if(dist<22&&b.userData.cd<0){hp=Math.max(0,hp-4);b.userData.cd=1.4;updateStats();if(hp<=0){game=false;document.querySelector('#panel h1').textContent='FIM DE JOGO';document.querySelector('#panel p').textContent=`Eliminações: ${kills}. Toque para tentar novamente.`;document.getElementById('overlay').style.display='flex'}}}
+ if(fire){fireClock-=dt;if(fireClock<=0){shoot();fireClock=.32}}
+ }
+ const targetCam=new THREE.Vector3(player.position.x,player.position.y+6.3,player.position.z+10);camera.position.lerp(targetCam,.12);camera.lookAt(player.position.x,1.3,player.position.z-2);
+ renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+const pad=document.getElementById('pad'),stick=document.getElementById('stick');function move(e){let r=pad.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2,m=Math.min(44,Math.hypot(x,y)),a=Math.atan2(y,x);joy.x=Math.cos(a)*m/44;joy.y=Math.sin(a)*m/44;stick.style.left=(39+joy.x*35)+'px';stick.style.top=(39+joy.y*35)+'px'}
+pad.onpointerdown=e=>{moving=true;pad.setPointerCapture(e.pointerId);move(e)};pad.onpointermove=e=>{if(moving)move(e)};pad.onpointerup=pad.onpointercancel=()=>{moving=false;joy={x:0,y:0};stick.style.left='37px';stick.style.top='37px'};
+const fb=document.getElementById('fire');fb.onpointerdown=e=>{fire=true;shoot();fb.setPointerCapture(e.pointerId)};fb.onpointerup=fb.onpointercancel=()=>fire=false;
+document.getElementById('heal').onclick=()=>{hp=Math.min(100,hp+25);updateStats()};
+document.getElementById('start').onclick=()=>{if(hp<=0){hp=100;kills=0;for(let b of bots){b.userData.alive=true;b.userData.hp=3;scene.add(b);b.position.set((Math.random()-.5)*75,0,(Math.random()-.5)*75)}}updateStats();game=true;document.getElementById('overlay').style.display='none'};
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script></body></html>
